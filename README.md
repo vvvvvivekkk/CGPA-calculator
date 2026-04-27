@@ -1,4 +1,4 @@
-# 🎓 Premium CGPA Calculator Web App
+# 🎓 Ignitext — Premium CGPA Calculator Web App
 
 A modern, responsive web application for calculating CGPA (Cumulative Grade Point Average) with an elegant user interface and real-time calculations.
 
