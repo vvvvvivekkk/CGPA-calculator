@@ -13,15 +13,6 @@
             display: ["Sora", "sans-serif"],
             body: ["Plus Jakarta Sans", "sans-serif"],
           },
-          colors: {
-            accent: {
-              50: "#f0f9ff",
-              100: "#e0f2fe",
-              500: "#0ea5e9",
-              600: "#0284c7",
-              700: "#0369a1",
-            },
-          },
           boxShadow: {
             glow: "0 10px 40px -12px rgba(2, 132, 199, 0.35)",
           },
@@ -89,9 +80,28 @@
       box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.08) inset;
     }
 
+    .field-error {
+      min-height: 1rem;
+      font-size: 0.72rem;
+      line-height: 1rem;
+      color: #dc2626;
+    }
+
+    .field-error:empty {
+      visibility: hidden;
+    }
+
+    .row-lab {
+      background: linear-gradient(90deg, rgba(34, 197, 94, 0.08), rgba(255, 255, 255, 0.92));
+    }
+
     .fade-mask {
       mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent);
       -webkit-mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent);
+    }
+
+    .mark-group {
+      transition: opacity 180ms ease, transform 180ms ease, max-height 180ms ease;
     }
   </style>
 </head>
@@ -159,14 +169,14 @@
         </div>
 
         <div class="fade-mask overflow-x-auto rounded-2xl">
-          <table class="min-w-[1100px] w-full border-separate border-spacing-y-2 text-sm">
+          <table class="min-w-[1500px] w-full border-separate border-spacing-y-2 text-sm">
             <thead>
               <tr class="text-left text-slate-600">
                 <th class="px-3 py-2">Subject</th>
+                <th class="px-3 py-2">Type</th>
                 <th class="px-3 py-2">Credits</th>
-                <th class="px-3 py-2">Mid 1</th>
-                <th class="px-3 py-2">Mid 2</th>
-                <th class="px-3 py-2">Assignments</th>
+                <th class="px-3 py-2">Theory Inputs</th>
+                <th class="px-3 py-2">Lab Inputs</th>
                 <th class="px-3 py-2">Internal</th>
                 <th class="px-3 py-2">External</th>
                 <th class="px-3 py-2">Grade</th>
@@ -221,9 +231,9 @@
     const mobileMenuBtn = document.getElementById("mobileMenuBtn");
 
     const defaultSubjects = [
-      { subject: "Mathematics", credits: 4, mid1: 24, mid2: 26, assignments: 16, external: 40 },
-      { subject: "Physics", credits: 3, mid1: 22, mid2: 21, assignments: 14, external: 35 },
-      { subject: "Programming", credits: 4, mid1: 27, mid2: 28, assignments: 18, external: 44 },
+      { subject: "Mathematics", type: "theory", credits: 4, mid1: 24, mid2: 26, assignments: 16, external: 40 },
+      { subject: "Physics Lab", type: "lab", credits: 3, dayToDay: 18, skill1: 24, skill2: 25, external: 38 },
+      { subject: "Programming", type: "theory", credits: 4, mid1: 27, mid2: 28, assignments: 18, external: 44 },
     ];
 
     function makeInput(type, value, placeholder, classes, min, max) {
@@ -237,122 +247,273 @@
       return input;
     }
 
-    function addSubjectRow(data = {}) {
-      const row = document.createElement("tr");
-      row.className = "group rounded-2xl bg-white/80 shadow-sm transition duration-200 hover:shadow-md";
+    function makeSelect(value) {
+      const select = document.createElement("select");
+      select.className = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500";
+      select.innerHTML = `
+        <option value="theory">Theory</option>
+        <option value="lab">Lab</option>
+      `;
+      select.value = value;
+      return select;
+    }
 
-      const subjectInput = makeInput("text", data.subject ?? "", "Subject name", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", null, null);
-      const creditsInput = makeInput("number", data.credits ?? "", "Credits", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, null);
-      const mid1Input = makeInput("number", data.mid1 ?? "", "0-30", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
-      const mid2Input = makeInput("number", data.mid2 ?? "", "0-30", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
-      const assignmentsInput = makeInput("number", data.assignments ?? "", "0-20", "w-28 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 20);
-      const externalInput = makeInput("number", data.external ?? "", "0-50", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 50);
-
-      const internalCell = document.createElement("td");
-      internalCell.className = "px-3 py-2 font-semibold text-slate-700";
-      internalCell.textContent = "0.00";
-
-      const gradeCell = document.createElement("td");
-      gradeCell.className = "px-3 py-2";
-      gradeCell.innerHTML = '<span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">-</span>';
-
-      const pointsCell = document.createElement("td");
-      pointsCell.className = "px-3 py-2 font-bold text-slate-700";
-      pointsCell.textContent = "0";
-
-      const actionCell = document.createElement("td");
-      actionCell.className = "px-3 py-2 text-center";
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100";
-      deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-      deleteBtn.addEventListener("click", () => {
-        row.remove();
-      });
-      actionCell.appendChild(deleteBtn);
-
-      const cells = [
-        makeCell(subjectInput),
-        makeCell(creditsInput),
-        makeCell(mid1Input),
-        makeCell(mid2Input),
-        makeCell(assignmentsInput),
-        internalCell,
-        makeCell(externalInput),
-        gradeCell,
-        pointsCell,
-        actionCell,
-      ];
-
-      cells.forEach((cell) => row.appendChild(cell));
-
-      [mid1Input, mid2Input, assignmentsInput].forEach((el) => {
-        el.addEventListener("input", () => calculateInternal(row));
-      });
-
-      [creditsInput, mid1Input, mid2Input, assignmentsInput, externalInput].forEach((el) => {
-        el.addEventListener("input", () => validateNumericInput(el));
-      });
-
-      subjectTableBody.appendChild(row);
-      calculateInternal(row);
+    function makeField(labelText, input) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "mark-group space-y-1";
+      const label = document.createElement("div");
+      label.className = "text-[11px] font-semibold uppercase tracking-wider text-slate-500";
+      label.textContent = labelText;
+      const error = document.createElement("div");
+      error.className = "field-error";
+      wrapper.append(label, input, error);
+      return { wrapper, error };
     }
 
     function makeCell(child) {
       const td = document.createElement("td");
-      td.className = "px-3 py-2";
+      td.className = "px-3 py-2 align-top";
       td.appendChild(child);
       return td;
     }
 
-    function validateNumericInput(input) {
-      const max = input.max !== "" ? Number(input.max) : null;
-      const min = input.min !== "" ? Number(input.min) : null;
-      const value = input.value === "" ? null : Number(input.value);
+    function setError(input, errorNode, message) {
+      input.classList.add("invalid");
+      errorNode.textContent = message;
+    }
 
-      let valid = true;
-      if (value !== null) {
-        if (Number.isNaN(value)) valid = false;
-        if (min !== null && value < min) valid = false;
-        if (max !== null && value > max) valid = false;
-      }
-
-      if (!valid) {
-        input.classList.add("invalid");
-      } else {
-        input.classList.remove("invalid");
-      }
-
-      return valid;
+    function clearError(input, errorNode) {
+      input.classList.remove("invalid");
+      errorNode.textContent = "";
     }
 
     function parseValue(input) {
+      if (input.value.trim() === "") return 0;
       const value = Number(input.value);
       return Number.isFinite(value) ? value : 0;
     }
 
-    function calculateInternal(row) {
-      const mid1Input = row.children[2].querySelector("input");
-      const mid2Input = row.children[3].querySelector("input");
-      const assignmentsInput = row.children[4].querySelector("input");
-      const internalCell = row.children[5];
+    function validateNumber(input, errorNode, label, max, required, min = 0) {
+      const raw = input.value.trim();
+      if (raw === "") {
+        if (required) {
+          setError(input, errorNode, `${label} is required`);
+          return false;
+        }
+        clearError(input, errorNode);
+        return true;
+      }
 
-      const mid1 = parseValue(mid1Input);
-      const mid2 = parseValue(mid2Input);
-      const assignments = parseValue(assignmentsInput);
+      const value = Number(raw);
+      if (!Number.isFinite(value)) {
+        setError(input, errorNode, `${label} must be a number`);
+        return false;
+      }
+      if (value < min || value > max) {
+        setError(input, errorNode, `${label} must be ${min}-${max}`);
+        return false;
+      }
 
-      const midAvg = (mid1 + mid2) / 2;
-      const internal = midAvg + assignments;
-      internalCell.textContent = internal.toFixed(2);
+      clearError(input, errorNode);
+      return true;
+    }
 
-      return internal;
+    function createSubjectRow(data = {}) {
+      const row = document.createElement("tr");
+      row.className = "group rounded-2xl bg-white/80 shadow-sm transition duration-200 hover:shadow-md";
+
+      const subjectInput = makeInput("text", data.subject ?? "", "Subject name", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", null, null);
+      const subjectField = makeField("Subject", subjectInput);
+      const subjectCell = document.createElement("td");
+      subjectCell.className = "px-3 py-2 align-top";
+      subjectCell.append(subjectField.wrapper);
+
+      const typeSelect = makeSelect(data.type === "lab" ? "lab" : "theory");
+      const typeBadge = document.createElement("span");
+      typeBadge.className = "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-700";
+      const typeCell = document.createElement("td");
+      typeCell.className = "px-3 py-2 align-top";
+      const typeStack = document.createElement("div");
+      typeStack.className = "space-y-2";
+      typeStack.append(typeSelect, typeBadge);
+      typeCell.appendChild(typeStack);
+
+      const creditsInput = makeInput("number", data.credits ?? "", "Credits", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 1, null);
+      const creditsField = makeField("Credits", creditsInput);
+      const creditsCell = document.createElement("td");
+      creditsCell.className = "px-3 py-2 align-top";
+      creditsCell.appendChild(creditsField.wrapper);
+
+      const theoryCell = document.createElement("td");
+      theoryCell.className = "px-3 py-2 align-top";
+      const theoryWrap = document.createElement("div");
+      theoryWrap.className = "grid gap-2 xl:grid-cols-3";
+      const theoryMid1Input = makeInput("number", data.mid1 ?? "", "0-30", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
+      const theoryMid2Input = makeInput("number", data.mid2 ?? "", "0-30", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
+      const theoryAssignmentsInput = makeInput("number", data.assignments ?? "", "0-20", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 20);
+      const theoryField1 = makeField("Mid 1", theoryMid1Input);
+      const theoryField2 = makeField("Mid 2", theoryMid2Input);
+      const theoryField3 = makeField("Assignments", theoryAssignmentsInput);
+      theoryWrap.append(theoryField1.wrapper, theoryField2.wrapper, theoryField3.wrapper);
+      theoryCell.appendChild(theoryWrap);
+
+      const labCell = document.createElement("td");
+      labCell.className = "px-3 py-2 align-top";
+      const labWrap = document.createElement("div");
+      labWrap.className = "grid gap-2 xl:grid-cols-3";
+      const dayToDayInput = makeInput("number", data.dayToDay ?? "", "0-20", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 20);
+      const skill1Input = makeInput("number", data.skill1 ?? "", "0-30", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
+      const skill2Input = makeInput("number", data.skill2 ?? "", "0-30", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
+      const labField1 = makeField("Day-to-Day", dayToDayInput);
+      const labField2 = makeField("Skill Test 1", skill1Input);
+      const labField3 = makeField("Skill Test 2", skill2Input);
+      labWrap.append(labField1.wrapper, labField2.wrapper, labField3.wrapper);
+      labCell.appendChild(labWrap);
+
+      const internalCell = document.createElement("td");
+      internalCell.className = "px-3 py-2 font-semibold text-slate-700 align-top";
+      internalCell.textContent = "0.00";
+
+      const externalInput = makeInput("number", data.external ?? "", "0-50", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 50);
+      const externalField = makeField("External", externalInput);
+      const externalCell = document.createElement("td");
+      externalCell.className = "px-3 py-2 align-top";
+      externalCell.appendChild(externalField.wrapper);
+
+      const gradeCell = document.createElement("td");
+      gradeCell.className = "px-3 py-2 align-top";
+      gradeCell.innerHTML = '<span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">-</span>';
+
+      const pointsCell = document.createElement("td");
+      pointsCell.className = "px-3 py-2 font-bold text-slate-700 align-top";
+      pointsCell.textContent = "0";
+
+      const actionCell = document.createElement("td");
+      actionCell.className = "px-3 py-2 text-center align-top";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100";
+      deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      deleteBtn.addEventListener("click", () => row.remove());
+      actionCell.appendChild(deleteBtn);
+
+      row.append(subjectCell, typeCell, creditsCell, theoryCell, labCell, internalCell, externalCell, gradeCell, pointsCell, actionCell);
+      row.classList.toggle("row-lab", typeSelect.value === "lab");
+
+      row._els = {
+        row,
+        subjectInput,
+        subjectError: subjectField.error,
+        typeSelect,
+        typeBadge,
+        creditsInput,
+        creditsError: creditsField.error,
+        theoryCell,
+        labCell,
+        theoryMid1Input,
+        theoryMid2Input,
+        theoryAssignmentsInput,
+        theoryField1Error: theoryField1.error,
+        theoryField2Error: theoryField2.error,
+        theoryField3Error: theoryField3.error,
+        dayToDayInput,
+        skill1Input,
+        skill2Input,
+        labField1Error: labField1.error,
+        labField2Error: labField2.error,
+        labField3Error: labField3.error,
+        internalCell,
+        externalInput,
+        externalError: externalField.error,
+        gradeCell,
+        pointsCell,
+      };
+
+      function syncTypeUI(resetHiddenFields) {
+        const isLab = typeSelect.value === "lab";
+        row.classList.toggle("row-lab", isLab);
+        theoryCell.classList.toggle("hidden", isLab);
+        labCell.classList.toggle("hidden", !isLab);
+
+        typeBadge.textContent = isLab ? "Lab" : "Theory";
+        typeBadge.className = isLab
+          ? "inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700"
+          : "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-700";
+
+        if (resetHiddenFields) {
+          if (isLab) {
+            theoryMid1Input.value = "";
+            theoryMid2Input.value = "";
+            theoryAssignmentsInput.value = "";
+          } else {
+            dayToDayInput.value = "";
+            skill1Input.value = "";
+            skill2Input.value = "";
+          }
+        }
+
+        clearError(theoryMid1Input, theoryField1.error);
+        clearError(theoryMid2Input, theoryField2.error);
+        clearError(theoryAssignmentsInput, theoryField3.error);
+        clearError(dayToDayInput, labField1.error);
+        clearError(skill1Input, labField2.error);
+        clearError(skill2Input, labField3.error);
+      }
+
+      function calculateInternal() {
+        const isLab = typeSelect.value === "lab";
+        const internal = isLab
+          ? Math.min(50, parseValue(dayToDayInput) + ((parseValue(skill1Input) + parseValue(skill2Input)) / 2))
+          : Math.min(50, ((parseValue(theoryMid1Input) + parseValue(theoryMid2Input)) / 2) + parseValue(theoryAssignmentsInput));
+        internalCell.textContent = internal.toFixed(2);
+        return internal;
+      }
+
+      function validateActiveMarks() {
+        const isLab = typeSelect.value === "lab";
+        return isLab
+          ? [
+              validateNumber(dayToDayInput, labField1.error, "Day-to-Day", 20, true),
+              validateNumber(skill1Input, labField2.error, "Skill Test 1", 30, true),
+              validateNumber(skill2Input, labField3.error, "Skill Test 2", 30, true),
+            ].every(Boolean)
+          : [
+              validateNumber(theoryMid1Input, theoryField1.error, "Mid 1", 30, true),
+              validateNumber(theoryMid2Input, theoryField2.error, "Mid 2", 30, true),
+              validateNumber(theoryAssignmentsInput, theoryField3.error, "Assignments", 20, true),
+            ].every(Boolean);
+      }
+
+      typeSelect.addEventListener("change", () => {
+        syncTypeUI(true);
+        calculateInternal();
+      });
+
+      [theoryMid1Input, theoryMid2Input, theoryAssignmentsInput, dayToDayInput, skill1Input, skill2Input, externalInput].forEach((input) => {
+        input.addEventListener("input", () => {
+          const isLab = typeSelect.value === "lab";
+          if (!isLab) {
+            validateActiveMarks();
+          } else {
+            validateActiveMarks();
+          }
+          validateNumber(externalInput, externalField.error, "External", 50, true);
+          calculateInternal();
+        });
+      });
+
+      subjectInput.addEventListener("input", () => clearError(subjectInput, subjectField.error));
+      creditsInput.addEventListener("input", () => validateNumber(creditsInput, creditsField.error, "Credits", 9999, true, 1));
+
+      syncTypeUI(false);
+      calculateInternal();
+      return row;
     }
 
     function getGrade(total, external) {
       if (external < 20) {
         return { grade: "F", points: 0, color: "bg-red-100 text-red-700" };
       }
-
       if (total >= 90) return { grade: "O", points: 10, color: "bg-green-100 text-green-700" };
       if (total >= 80) return { grade: "A+", points: 9, color: "bg-lime-100 text-lime-700" };
       if (total >= 70) return { grade: "A", points: 8, color: "bg-yellow-100 text-yellow-700" };
@@ -377,40 +538,48 @@
       let failCount = 0;
 
       rows.forEach((row) => {
+        const controls = row._els;
         row.classList.remove("bg-red-100", "ring-1", "ring-red-300");
 
-        const subjectInput = row.children[0].querySelector("input");
-        const creditsInput = row.children[1].querySelector("input");
-        const mid1Input = row.children[2].querySelector("input");
-        const mid2Input = row.children[3].querySelector("input");
-        const assignmentsInput = row.children[4].querySelector("input");
-        const externalInput = row.children[6].querySelector("input");
-        const gradeCell = row.children[7];
-        const pointsCell = row.children[8];
-
-        const checks = [creditsInput, mid1Input, mid2Input, assignmentsInput, externalInput].map(validateNumericInput);
-        if (subjectInput.value.trim() === "") {
-          subjectInput.classList.add("invalid");
-          checks.push(false);
+        const subjectValid = controls.subjectInput.value.trim() !== "";
+        if (!subjectValid) {
+          setError(controls.subjectInput, controls.subjectError, "Subject name is required");
         } else {
-          subjectInput.classList.remove("invalid");
+          clearError(controls.subjectInput, controls.subjectError);
         }
 
-        if (checks.includes(false)) {
+        const creditsValid = validateNumber(controls.creditsInput, controls.creditsError, "Credits", 9999, true, 1);
+        const externalValid = validateNumber(controls.externalInput, controls.externalError, "External", 50, true, 0);
+        const marksValid = controls.typeSelect.value === "lab"
+          ? [
+              validateNumber(controls.dayToDayInput, controls.labField1Error, "Day-to-Day", 20, true, 0),
+              validateNumber(controls.skill1Input, controls.labField2Error, "Skill Test 1", 30, true, 0),
+              validateNumber(controls.skill2Input, controls.labField3Error, "Skill Test 2", 30, true, 0),
+            ].every(Boolean)
+          : [
+              validateNumber(controls.theoryMid1Input, controls.theoryField1Error, "Mid 1", 30, true, 0),
+              validateNumber(controls.theoryMid2Input, controls.theoryField2Error, "Mid 2", 30, true, 0),
+              validateNumber(controls.theoryAssignmentsInput, controls.theoryField3Error, "Assignments", 20, true, 0),
+            ].every(Boolean);
+
+        if (!subjectValid || !creditsValid || !externalValid || !marksValid) {
           hasInvalidInput = true;
-          gradeCell.innerHTML = '<span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">-</span>';
-          pointsCell.textContent = "0";
+          controls.gradeCell.innerHTML = '<span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">-</span>';
+          controls.pointsCell.textContent = "0";
           return;
         }
 
-        const credits = parseValue(creditsInput);
-        const external = parseValue(externalInput);
-        const internal = calculateInternal(row);
-        const total = internal + external;
+        const credits = Number(controls.creditsInput.value);
+        const external = Number(controls.externalInput.value);
+        const internal = controls.typeSelect.value === "lab"
+          ? Math.min(50, parseValue(controls.dayToDayInput) + ((parseValue(controls.skill1Input) + parseValue(controls.skill2Input)) / 2))
+          : Math.min(50, ((parseValue(controls.theoryMid1Input) + parseValue(controls.theoryMid2Input)) / 2) + parseValue(controls.theoryAssignmentsInput));
+        controls.internalCell.textContent = internal.toFixed(2);
 
+        const total = internal + external;
         const gradeInfo = getGrade(total, external);
-        gradeCell.innerHTML = `<span class="rounded-lg px-2.5 py-1 text-xs font-bold ${gradeInfo.color}">${gradeInfo.grade}</span>`;
-        pointsCell.textContent = String(gradeInfo.points);
+        controls.gradeCell.innerHTML = `<span class="rounded-lg px-2.5 py-1 text-xs font-bold ${gradeInfo.color}">${gradeInfo.grade}</span>`;
+        controls.pointsCell.textContent = String(gradeInfo.points);
 
         if (gradeInfo.grade === "F") {
           failCount += 1;
@@ -440,9 +609,8 @@
       resultsSection.classList.remove("hidden", "animate-floatIn");
       void resultsSection.offsetWidth;
       resultsSection.classList.add("animate-floatIn");
-
-      showToast("CGPA calculated successfully.");
       resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      showToast("CGPA calculated successfully.");
     }
 
     function showToast(message) {
@@ -456,6 +624,13 @@
       }, 2200);
     }
 
+    function preloadDefaults() {
+      defaultSubjects.forEach((subject) => {
+        const row = createSubjectRow(subject);
+        subjectTableBody.appendChild(row);
+      });
+    }
+
     function resetAll() {
       subjectTableBody.innerHTML = "";
       resultsSection.classList.add("hidden");
@@ -464,13 +639,14 @@
       passFailOutput.textContent = "0 Pass / 0 Fail";
       creditsOutput.textContent = "0";
       showToast("All data has been reset.");
+      preloadDefaults();
     }
 
-    function preloadDefaults() {
-      defaultSubjects.forEach((subject) => addSubjectRow(subject));
-    }
+    addSubjectBtn.addEventListener("click", () => {
+      const row = createSubjectRow();
+      subjectTableBody.appendChild(row);
+    });
 
-    addSubjectBtn.addEventListener("click", () => addSubjectRow());
     calculateBtn.addEventListener("click", calculateCGPA);
     resetBtn.addEventListener("click", resetAll);
 
