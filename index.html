@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ignitext | CGPA Calculator</title>
+  <script>
+    tailwind = window.tailwind || {};
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Sora", "sans-serif"],
+            body: ["Plus Jakarta Sans", "sans-serif"],
+          },
+          colors: {
+            accent: {
+              50: "#f0f9ff",
+              100: "#e0f2fe",
+              500: "#0ea5e9",
+              600: "#0284c7",
+              700: "#0369a1",
+            },
+          },
+          boxShadow: {
+            glow: "0 10px 40px -12px rgba(2, 132, 199, 0.35)",
+          },
+          animation: {
+            floatIn: "floatIn .45s ease-out",
+            toastIn: "toastIn .3s ease-out",
+          },
+          keyframes: {
+            floatIn: {
+              "0%": { opacity: "0", transform: "translateY(18px) scale(.98)" },
+              "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+            },
+            toastIn: {
+              "0%": { opacity: "0", transform: "translateY(8px) scale(.98)" },
+              "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root {
+      --bg-1: #f8fafc;
+      --bg-2: #e2e8f0;
+      --bg-3: #dbeafe;
+      --panel: rgba(255, 255, 255, 0.7);
+      --panel-strong: rgba(255, 255, 255, 0.9);
+      --border: rgba(148, 163, 184, 0.28);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background:
+        radial-gradient(1000px 500px at 90% -10%, rgba(14, 165, 233, 0.14), transparent 70%),
+        radial-gradient(700px 350px at 10% 0%, rgba(16, 185, 129, 0.14), transparent 60%),
+        linear-gradient(160deg, var(--bg-1), var(--bg-2), var(--bg-3));
+    }
+
+    .glass {
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+    }
+
+    .glass-strong {
+      background: var(--panel-strong);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+    }
+
+    .invalid {
+      border-color: #ef4444 !important;
+      background: #fff1f2 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.08) inset;
+    }
+
+    .fade-mask {
+      mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent);
+    }
+  </style>
+</head>
+<body class="min-h-screen font-body text-slate-800">
+  <div class="relative min-h-screen">
+    <div class="fixed right-0 top-0 -z-10 h-[280px] w-[280px] rounded-full bg-cyan-300/30 blur-3xl"></div>
+    <div class="fixed bottom-0 left-0 -z-10 h-[260px] w-[260px] rounded-full bg-emerald-300/30 blur-3xl"></div>
+
+    <button id="mobileMenuBtn" class="fixed left-4 top-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white shadow-lg lg:hidden">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-2xl transition-transform duration-300 lg:translate-x-0">
+      <div class="flex h-full flex-col">
+        <div class="mb-10">
+          <h1 class="font-display text-4xl font-extrabold tracking-tight">Ignitext</h1>
+          <p class="mt-2 text-sm text-slate-300">Smart Academic Tools</p>
+        </div>
+
+        <nav class="space-y-3 text-sm">
+          <div class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <i class="fa-solid fa-calculator text-cyan-300"></i>
+            <span class="font-medium">CGPA Dashboard</span>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-300">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Performance Analytics</span>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-300">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Semester Planner</span>
+          </div>
+        </nav>
+
+        <div class="mt-auto rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p class="text-xs uppercase tracking-wider text-cyan-300">Tip</p>
+          <p class="mt-2 text-sm text-slate-200">External marks below 20 instantly fail that subject.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="px-4 pb-10 pt-20 transition-all duration-300 lg:ml-72 lg:px-10 lg:pt-10">
+      <section class="mb-6 rounded-3xl border border-white/40 bg-white/50 p-6 shadow-glow backdrop-blur-sm">
+        <h2 class="font-display text-3xl font-extrabold text-slate-900">CGPA Calculator</h2>
+        <p class="mt-2 text-slate-600">Analyze your academic performance</p>
+      </section>
+
+      <section class="glass rounded-3xl p-4 shadow-xl md:p-6">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 class="font-display text-xl font-bold text-slate-800">Subjects Overview</h3>
+          <div class="flex flex-wrap gap-2">
+            <button id="addSubjectBtn" class="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:translate-y-[-1px] hover:bg-emerald-600 active:translate-y-0">
+              <i class="fa-solid fa-plus"></i>
+              Add Subject
+            </button>
+            <button id="calculateBtn" class="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:translate-y-[-1px] hover:bg-cyan-700 active:translate-y-0">
+              <i class="fa-solid fa-chart-simple"></i>
+              Calculate CGPA
+            </button>
+            <button id="resetBtn" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:translate-y-[-1px] hover:bg-rose-600 active:translate-y-0">
+              <i class="fa-solid fa-rotate-left"></i>
+              Reset All
+            </button>
+          </div>
+        </div>
+
+        <div class="fade-mask overflow-x-auto rounded-2xl">
+          <table class="min-w-[1100px] w-full border-separate border-spacing-y-2 text-sm">
+            <thead>
+              <tr class="text-left text-slate-600">
+                <th class="px-3 py-2">Subject</th>
+                <th class="px-3 py-2">Credits</th>
+                <th class="px-3 py-2">Mid 1</th>
+                <th class="px-3 py-2">Mid 2</th>
+                <th class="px-3 py-2">Assignments</th>
+                <th class="px-3 py-2">Internal</th>
+                <th class="px-3 py-2">External</th>
+                <th class="px-3 py-2">Grade</th>
+                <th class="px-3 py-2">Points</th>
+                <th class="px-3 py-2 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="subjectTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="resultsSection" class="glass-strong mt-6 hidden rounded-3xl p-6 shadow-xl">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-2xl bg-slate-900 p-5 text-white shadow-lg">
+            <p class="text-xs uppercase tracking-widest text-cyan-300">CGPA</p>
+            <p id="cgpaOutput" class="mt-2 font-display text-4xl font-extrabold">0.00</p>
+          </div>
+          <div class="rounded-2xl bg-white p-5 shadow-md">
+            <p class="text-xs uppercase tracking-widest text-slate-500">Total Percentage</p>
+            <p id="percentageOutput" class="mt-2 text-3xl font-bold text-slate-800">0.00%</p>
+          </div>
+          <div class="rounded-2xl bg-white p-5 shadow-md">
+            <p class="text-xs uppercase tracking-widest text-slate-500">Pass / Fail</p>
+            <p id="passFailOutput" class="mt-2 text-2xl font-bold text-slate-800">0 Pass / 0 Fail</p>
+          </div>
+          <div class="rounded-2xl bg-white p-5 shadow-md">
+            <p class="text-xs uppercase tracking-widest text-slate-500">Total Credits</p>
+            <p id="creditsOutput" class="mt-2 text-3xl font-bold text-slate-800">0</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="pointer-events-none fixed bottom-5 right-5 z-50 hidden rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-2xl">
+      CGPA calculated successfully.
+    </div>
+  </div>
+
+  <script>
+    const subjectTableBody = document.getElementById("subjectTableBody");
+    const addSubjectBtn = document.getElementById("addSubjectBtn");
+    const calculateBtn = document.getElementById("calculateBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const resultsSection = document.getElementById("resultsSection");
+    const cgpaOutput = document.getElementById("cgpaOutput");
+    const percentageOutput = document.getElementById("percentageOutput");
+    const passFailOutput = document.getElementById("passFailOutput");
+    const creditsOutput = document.getElementById("creditsOutput");
+    const toast = document.getElementById("toast");
+    const sidebar = document.getElementById("sidebar");
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+
+    const defaultSubjects = [
+      { subject: "Mathematics", credits: 4, mid1: 24, mid2: 26, assignments: 16, external: 40 },
+      { subject: "Physics", credits: 3, mid1: 22, mid2: 21, assignments: 14, external: 35 },
+      { subject: "Programming", credits: 4, mid1: 27, mid2: 28, assignments: 18, external: 44 },
+    ];
+
+    function makeInput(type, value, placeholder, classes, min, max) {
+      const input = document.createElement("input");
+      input.type = type;
+      input.value = value;
+      input.placeholder = placeholder;
+      input.className = classes;
+      if (min !== null) input.min = min;
+      if (max !== null) input.max = max;
+      return input;
+    }
+
+    function addSubjectRow(data = {}) {
+      const row = document.createElement("tr");
+      row.className = "group rounded-2xl bg-white/80 shadow-sm transition duration-200 hover:shadow-md";
+
+      const subjectInput = makeInput("text", data.subject ?? "", "Subject name", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", null, null);
+      const creditsInput = makeInput("number", data.credits ?? "", "Credits", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, null);
+      const mid1Input = makeInput("number", data.mid1 ?? "", "0-30", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
+      const mid2Input = makeInput("number", data.mid2 ?? "", "0-30", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 30);
+      const assignmentsInput = makeInput("number", data.assignments ?? "", "0-20", "w-28 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 20);
+      const externalInput = makeInput("number", data.external ?? "", "0-50", "w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 50);
+
+      const internalCell = document.createElement("td");
+      internalCell.className = "px-3 py-2 font-semibold text-slate-700";
+      internalCell.textContent = "0.00";
+
+      const gradeCell = document.createElement("td");
+      gradeCell.className = "px-3 py-2";
+      gradeCell.innerHTML = '<span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">-</span>';
+
+      const pointsCell = document.createElement("td");
+      pointsCell.className = "px-3 py-2 font-bold text-slate-700";
+      pointsCell.textContent = "0";
+
+      const actionCell = document.createElement("td");
+      actionCell.className = "px-3 py-2 text-center";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100";
+      deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      deleteBtn.addEventListener("click", () => {
+        row.remove();
+      });
+      actionCell.appendChild(deleteBtn);
+
+      const cells = [
+        makeCell(subjectInput),
+        makeCell(creditsInput),
+        makeCell(mid1Input),
+        makeCell(mid2Input),
+        makeCell(assignmentsInput),
+        internalCell,
+        makeCell(externalInput),
+        gradeCell,
+        pointsCell,
+        actionCell,
+      ];
+
+      cells.forEach((cell) => row.appendChild(cell));
+
+      [mid1Input, mid2Input, assignmentsInput].forEach((el) => {
+        el.addEventListener("input", () => calculateInternal(row));
+      });
+
+      [creditsInput, mid1Input, mid2Input, assignmentsInput, externalInput].forEach((el) => {
+        el.addEventListener("input", () => validateNumericInput(el));
+      });
+
+      subjectTableBody.appendChild(row);
+      calculateInternal(row);
+    }
+
+    function makeCell(child) {
+      const td = document.createElement("td");
+      td.className = "px-3 py-2";
+      td.appendChild(child);
+      return td;
+    }
+
+    function validateNumericInput(input) {
+      const max = input.max !== "" ? Number(input.max) : null;
+      const min = input.min !== "" ? Number(input.min) : null;
+      const value = input.value === "" ? null : Number(input.value);
+
+      let valid = true;
+      if (value !== null) {
+        if (Number.isNaN(value)) valid = false;
+        if (min !== null && value < min) valid = false;
+        if (max !== null && value > max) valid = false;
+      }
+
+      if (!valid) {
+        input.classList.add("invalid");
+      } else {
+        input.classList.remove("invalid");
+      }
+
+      return valid;
+    }
+
+    function parseValue(input) {
+      const value = Number(input.value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function calculateInternal(row) {
+      const mid1Input = row.children[2].querySelector("input");
+      const mid2Input = row.children[3].querySelector("input");
+      const assignmentsInput = row.children[4].querySelector("input");
+      const internalCell = row.children[5];
+
+      const mid1 = parseValue(mid1Input);
+      const mid2 = parseValue(mid2Input);
+      const assignments = parseValue(assignmentsInput);
+
+      const midAvg = (mid1 + mid2) / 2;
+      const internal = midAvg + assignments;
+      internalCell.textContent = internal.toFixed(2);
+
+      return internal;
+    }
+
+    function getGrade(total, external) {
+      if (external < 20) {
+        return { grade: "F", points: 0, color: "bg-red-100 text-red-700" };
+      }
+
+      if (total >= 90) return { grade: "O", points: 10, color: "bg-green-100 text-green-700" };
+      if (total >= 80) return { grade: "A+", points: 9, color: "bg-lime-100 text-lime-700" };
+      if (total >= 70) return { grade: "A", points: 8, color: "bg-yellow-100 text-yellow-700" };
+      if (total >= 60) return { grade: "B+", points: 7, color: "bg-orange-100 text-orange-700" };
+      if (total >= 50) return { grade: "B", points: 6, color: "bg-blue-100 text-blue-700" };
+      if (total >= 40) return { grade: "C", points: 5, color: "bg-purple-100 text-purple-700" };
+      return { grade: "F", points: 0, color: "bg-red-100 text-red-700" };
+    }
+
+    function calculateCGPA() {
+      const rows = Array.from(subjectTableBody.querySelectorAll("tr"));
+      if (!rows.length) {
+        showToast("Add at least one subject before calculation.");
+        return;
+      }
+
+      let hasInvalidInput = false;
+      let weightedPoints = 0;
+      let totalCredits = 0;
+      let weightedTotalMarks = 0;
+      let passCount = 0;
+      let failCount = 0;
+
+      rows.forEach((row) => {
+        row.classList.remove("bg-red-100", "ring-1", "ring-red-300");
+
+        const subjectInput = row.children[0].querySelector("input");
+        const creditsInput = row.children[1].querySelector("input");
+        const mid1Input = row.children[2].querySelector("input");
+        const mid2Input = row.children[3].querySelector("input");
+        const assignmentsInput = row.children[4].querySelector("input");
+        const externalInput = row.children[6].querySelector("input");
+        const gradeCell = row.children[7];
+        const pointsCell = row.children[8];
+
+        const checks = [creditsInput, mid1Input, mid2Input, assignmentsInput, externalInput].map(validateNumericInput);
+        if (subjectInput.value.trim() === "") {
+          subjectInput.classList.add("invalid");
+          checks.push(false);
+        } else {
+          subjectInput.classList.remove("invalid");
+        }
+
+        if (checks.includes(false)) {
+          hasInvalidInput = true;
+          gradeCell.innerHTML = '<span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">-</span>';
+          pointsCell.textContent = "0";
+          return;
+        }
+
+        const credits = parseValue(creditsInput);
+        const external = parseValue(externalInput);
+        const internal = calculateInternal(row);
+        const total = internal + external;
+
+        const gradeInfo = getGrade(total, external);
+        gradeCell.innerHTML = `<span class="rounded-lg px-2.5 py-1 text-xs font-bold ${gradeInfo.color}">${gradeInfo.grade}</span>`;
+        pointsCell.textContent = String(gradeInfo.points);
+
+        if (gradeInfo.grade === "F") {
+          failCount += 1;
+          row.classList.add("bg-red-100", "ring-1", "ring-red-300");
+        } else {
+          passCount += 1;
+        }
+
+        weightedPoints += credits * gradeInfo.points;
+        weightedTotalMarks += credits * total;
+        totalCredits += credits;
+      });
+
+      if (hasInvalidInput) {
+        showToast("Please fix highlighted fields before calculating.");
+        return;
+      }
+
+      const cgpa = totalCredits > 0 ? weightedPoints / totalCredits : 0;
+      const percentage = totalCredits > 0 ? weightedTotalMarks / totalCredits : 0;
+
+      cgpaOutput.textContent = cgpa.toFixed(2);
+      percentageOutput.textContent = `${percentage.toFixed(2)}%`;
+      passFailOutput.textContent = `${passCount} Pass / ${failCount} Fail`;
+      creditsOutput.textContent = String(totalCredits);
+
+      resultsSection.classList.remove("hidden", "animate-floatIn");
+      void resultsSection.offsetWidth;
+      resultsSection.classList.add("animate-floatIn");
+
+      showToast("CGPA calculated successfully.");
+      resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.remove("hidden", "animate-toastIn");
+      void toast.offsetWidth;
+      toast.classList.add("animate-toastIn");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 2200);
+    }
+
+    function resetAll() {
+      subjectTableBody.innerHTML = "";
+      resultsSection.classList.add("hidden");
+      cgpaOutput.textContent = "0.00";
+      percentageOutput.textContent = "0.00%";
+      passFailOutput.textContent = "0 Pass / 0 Fail";
+      creditsOutput.textContent = "0";
+      showToast("All data has been reset.");
+    }
+
+    function preloadDefaults() {
+      defaultSubjects.forEach((subject) => addSubjectRow(subject));
+    }
+
+    addSubjectBtn.addEventListener("click", () => addSubjectRow());
+    calculateBtn.addEventListener("click", calculateCGPA);
+    resetBtn.addEventListener("click", resetAll);
+
+    mobileMenuBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("-translate-x-full");
+    });
+
+    document.addEventListener("click", (event) => {
+      const insideSidebar = sidebar.contains(event.target);
+      const tappedMenu = mobileMenuBtn.contains(event.target);
+      if (!insideSidebar && !tappedMenu && window.innerWidth < 1024) {
+        sidebar.classList.add("-translate-x-full");
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 1024) {
+        sidebar.classList.remove("-translate-x-full");
+      } else {
+        sidebar.classList.add("-translate-x-full");
+      }
+    });
+
+    preloadDefaults();
+    if (window.innerWidth >= 1024) {
+      sidebar.classList.remove("-translate-x-full");
+    }
+  </script>
+</body>
+</html>
