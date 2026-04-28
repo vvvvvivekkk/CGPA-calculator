@@ -5,7 +5,7 @@ A modern, responsive web application for calculating CGPA (Cumulative Grade Poin
 ## 🎬 Demo Preview
 <img width="1685" height="757" alt="image" src="https://github.com/user-attachments/assets/db76cbef-5b27-4b51-b112-5e727e038398" />
 
-![CGPA Calculator Demo](assets/demo.gif)
+https://cgpa-calculator-vivekreddy.vercel.app/
 
 > Add your exported GIF at `assets/demo.gif` to show the app in action.
 
