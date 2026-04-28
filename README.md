@@ -3,6 +3,7 @@
 A modern, responsive web application for calculating CGPA (Cumulative Grade Point Average) with an elegant user interface and real-time calculations.
 
 ## 🎬 Demo Preview
+<img width="1685" height="757" alt="image" src="https://github.com/user-attachments/assets/db76cbef-5b27-4b51-b112-5e727e038398" />
 
 ![CGPA Calculator Demo](assets/demo.gif)
 
