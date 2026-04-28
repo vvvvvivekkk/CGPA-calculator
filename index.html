@@ -234,6 +234,7 @@
       { subject: "Mathematics", type: "theory", credits: 4, mid1: 24, mid2: 26, assignments: 16, external: 40 },
       { subject: "Physics Lab", type: "lab", credits: 3, dayToDay: 18, skill1: 24, skill2: 25, external: 38 },
       { subject: "Programming", type: "theory", credits: 4, mid1: 27, mid2: 28, assignments: 18, external: 44 },
+      { subject: "Integrated Project", type: "integrated", credits: 2, integrated: 72, external: 18 },
     ];
 
     function makeInput(type, value, placeholder, classes, min, max) {
@@ -253,6 +254,7 @@
       select.innerHTML = `
         <option value="theory">Theory</option>
         <option value="lab">Lab</option>
+        <option value="integrated">Integrated Project</option>
       `;
       select.value = value;
       return select;
@@ -328,7 +330,7 @@
       subjectCell.className = "px-3 py-2 align-top";
       subjectCell.append(subjectField.wrapper);
 
-      const typeSelect = makeSelect(data.type === "lab" ? "lab" : "theory");
+      const typeSelect = makeSelect(["lab", "integrated"].includes(data.type) ? data.type : "theory");
       const typeBadge = document.createElement("span");
       typeBadge.className = "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-700";
       const typeCell = document.createElement("td");
@@ -354,7 +356,9 @@
       const theoryField1 = makeField("Mid 1", theoryMid1Input);
       const theoryField2 = makeField("Mid 2", theoryMid2Input);
       const theoryField3 = makeField("Assignments", theoryAssignmentsInput);
-      theoryWrap.append(theoryField1.wrapper, theoryField2.wrapper, theoryField3.wrapper);
+      const integratedInput = makeInput("number", data.integrated ?? "", "0-80", "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none transition focus:border-cyan-500", 0, 80);
+      const integratedField = makeField("Project Internal", integratedInput);
+      theoryWrap.append(theoryField1.wrapper, theoryField2.wrapper, theoryField3.wrapper, integratedField.wrapper);
       theoryCell.appendChild(theoryWrap);
 
       const labCell = document.createElement("td");
@@ -416,6 +420,8 @@
         theoryField1Error: theoryField1.error,
         theoryField2Error: theoryField2.error,
         theoryField3Error: theoryField3.error,
+        integratedInput,
+        integratedError: integratedField.error,
         dayToDayInput,
         skill1Input,
         skill2Input,
@@ -431,12 +437,21 @@
 
       function syncTypeUI(resetHiddenFields) {
         const isLab = typeSelect.value === "lab";
-        row.classList.toggle("row-lab", isLab);
+        const isIntegrated = typeSelect.value === "integrated";
+        row.classList.toggle("row-lab", isLab || isIntegrated);
         theoryCell.classList.toggle("hidden", isLab);
         labCell.classList.toggle("hidden", !isLab);
 
-        typeBadge.textContent = isLab ? "Lab" : "Theory";
-        typeBadge.className = isLab
+        theoryField1.wrapper.classList.toggle("hidden", isIntegrated);
+        theoryField2.wrapper.classList.toggle("hidden", isIntegrated);
+        theoryField3.wrapper.classList.toggle("hidden", isIntegrated);
+        integratedField.wrapper.classList.toggle("hidden", !isIntegrated);
+
+        externalInput.max = isIntegrated ? 20 : 50;
+        externalInput.placeholder = isIntegrated ? "0-20" : "0-50";
+
+        typeBadge.textContent = isLab ? "Lab" : isIntegrated ? "Integrated Project" : "Theory";
+        typeBadge.className = isLab || isIntegrated
           ? "inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700"
           : "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-700";
 
@@ -445,43 +460,59 @@
             theoryMid1Input.value = "";
             theoryMid2Input.value = "";
             theoryAssignmentsInput.value = "";
+            integratedInput.value = "";
+          } else if (isIntegrated) {
+            theoryMid1Input.value = "";
+            theoryMid2Input.value = "";
+            theoryAssignmentsInput.value = "";
+            dayToDayInput.value = "";
+            skill1Input.value = "";
+            skill2Input.value = "";
           } else {
+            integratedInput.value = "";
             dayToDayInput.value = "";
             skill1Input.value = "";
             skill2Input.value = "";
           }
+          externalInput.value = "";
         }
 
         clearError(theoryMid1Input, theoryField1.error);
         clearError(theoryMid2Input, theoryField2.error);
         clearError(theoryAssignmentsInput, theoryField3.error);
+        clearError(integratedInput, integratedField.error);
         clearError(dayToDayInput, labField1.error);
         clearError(skill1Input, labField2.error);
         clearError(skill2Input, labField3.error);
+        clearError(externalInput, externalField.error);
       }
 
       function calculateInternal() {
-        const isLab = typeSelect.value === "lab";
-        const internal = isLab
+        const type = typeSelect.value;
+        const internal = type === "lab"
           ? Math.min(50, parseValue(dayToDayInput) + ((parseValue(skill1Input) + parseValue(skill2Input)) / 2))
-          : Math.min(50, ((parseValue(theoryMid1Input) + parseValue(theoryMid2Input)) / 2) + parseValue(theoryAssignmentsInput));
+          : type === "integrated"
+            ? Math.min(80, parseValue(integratedInput))
+            : Math.min(50, ((parseValue(theoryMid1Input) + parseValue(theoryMid2Input)) / 2) + parseValue(theoryAssignmentsInput));
         internalCell.textContent = internal.toFixed(2);
         return internal;
       }
 
       function validateActiveMarks() {
-        const isLab = typeSelect.value === "lab";
-        return isLab
+        const type = typeSelect.value;
+        return type === "lab"
           ? [
               validateNumber(dayToDayInput, labField1.error, "Day-to-Day", 20, true),
               validateNumber(skill1Input, labField2.error, "Skill Test 1", 30, true),
               validateNumber(skill2Input, labField3.error, "Skill Test 2", 30, true),
             ].every(Boolean)
-          : [
-              validateNumber(theoryMid1Input, theoryField1.error, "Mid 1", 30, true),
-              validateNumber(theoryMid2Input, theoryField2.error, "Mid 2", 30, true),
-              validateNumber(theoryAssignmentsInput, theoryField3.error, "Assignments", 20, true),
-            ].every(Boolean);
+          : type === "integrated"
+            ? [validateNumber(integratedInput, integratedField.error, "Project Internal", 80, true)].every(Boolean)
+            : [
+                validateNumber(theoryMid1Input, theoryField1.error, "Mid 1", 30, true),
+                validateNumber(theoryMid2Input, theoryField2.error, "Mid 2", 30, true),
+                validateNumber(theoryAssignmentsInput, theoryField3.error, "Assignments", 20, true),
+              ].every(Boolean);
       }
 
       typeSelect.addEventListener("change", () => {
@@ -489,7 +520,7 @@
         calculateInternal();
       });
 
-      [theoryMid1Input, theoryMid2Input, theoryAssignmentsInput, dayToDayInput, skill1Input, skill2Input, externalInput].forEach((input) => {
+      [theoryMid1Input, theoryMid2Input, theoryAssignmentsInput, integratedInput, dayToDayInput, skill1Input, skill2Input, externalInput].forEach((input) => {
         input.addEventListener("input", () => {
           const isLab = typeSelect.value === "lab";
           if (!isLab) {
@@ -497,7 +528,7 @@
           } else {
             validateActiveMarks();
           }
-          validateNumber(externalInput, externalField.error, "External", 50, true);
+          validateNumber(externalInput, externalField.error, "External", typeSelect.value === "integrated" ? 20 : 50, true);
           calculateInternal();
         });
       });
@@ -510,8 +541,9 @@
       return row;
     }
 
-    function getGrade(total, external) {
-      if (external < 20) {
+    function getGrade(total, external, type = "theory") {
+      const externalPassMark = type === "integrated" ? 8 : 20;
+      if (external < externalPassMark) {
         return { grade: "F", points: 0, color: "bg-red-100 text-red-700" };
       }
       if (total >= 90) return { grade: "O", points: 10, color: "bg-green-100 text-green-700" };
@@ -549,18 +581,23 @@
         }
 
         const creditsValid = validateNumber(controls.creditsInput, controls.creditsError, "Credits", 9999, true, 1);
-        const externalValid = validateNumber(controls.externalInput, controls.externalError, "External", 50, true, 0);
+        const externalMax = controls.typeSelect.value === "integrated" ? 20 : 50;
+        const externalValid = validateNumber(controls.externalInput, controls.externalError, "External", externalMax, true, 0);
         const marksValid = controls.typeSelect.value === "lab"
           ? [
               validateNumber(controls.dayToDayInput, controls.labField1Error, "Day-to-Day", 20, true, 0),
               validateNumber(controls.skill1Input, controls.labField2Error, "Skill Test 1", 30, true, 0),
               validateNumber(controls.skill2Input, controls.labField3Error, "Skill Test 2", 30, true, 0),
             ].every(Boolean)
-          : [
-              validateNumber(controls.theoryMid1Input, controls.theoryField1Error, "Mid 1", 30, true, 0),
-              validateNumber(controls.theoryMid2Input, controls.theoryField2Error, "Mid 2", 30, true, 0),
-              validateNumber(controls.theoryAssignmentsInput, controls.theoryField3Error, "Assignments", 20, true, 0),
-            ].every(Boolean);
+          : controls.typeSelect.value === "integrated"
+            ? [
+                validateNumber(controls.integratedInput, controls.integratedError, "Project Internal", 80, true, 0),
+              ].every(Boolean)
+            : [
+                validateNumber(controls.theoryMid1Input, controls.theoryField1Error, "Mid 1", 30, true, 0),
+                validateNumber(controls.theoryMid2Input, controls.theoryField2Error, "Mid 2", 30, true, 0),
+                validateNumber(controls.theoryAssignmentsInput, controls.theoryField3Error, "Assignments", 20, true, 0),
+              ].every(Boolean);
 
         if (!subjectValid || !creditsValid || !externalValid || !marksValid) {
           hasInvalidInput = true;
@@ -573,11 +610,13 @@
         const external = Number(controls.externalInput.value);
         const internal = controls.typeSelect.value === "lab"
           ? Math.min(50, parseValue(controls.dayToDayInput) + ((parseValue(controls.skill1Input) + parseValue(controls.skill2Input)) / 2))
-          : Math.min(50, ((parseValue(controls.theoryMid1Input) + parseValue(controls.theoryMid2Input)) / 2) + parseValue(controls.theoryAssignmentsInput));
+          : controls.typeSelect.value === "integrated"
+            ? Math.min(80, parseValue(controls.integratedInput))
+            : Math.min(50, ((parseValue(controls.theoryMid1Input) + parseValue(controls.theoryMid2Input)) / 2) + parseValue(controls.theoryAssignmentsInput));
         controls.internalCell.textContent = internal.toFixed(2);
 
         const total = internal + external;
-        const gradeInfo = getGrade(total, external);
+        const gradeInfo = getGrade(total, external, controls.typeSelect.value);
         controls.gradeCell.innerHTML = `<span class="rounded-lg px-2.5 py-1 text-xs font-bold ${gradeInfo.color}">${gradeInfo.grade}</span>`;
         controls.pointsCell.textContent = String(gradeInfo.points);
 
